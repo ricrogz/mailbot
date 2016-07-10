@@ -59,7 +59,14 @@ class MailBot(object):
 
         for uid, msg in messages.items():
             self.mark_processing(uid)
-            message = message_from_string(msg['RFC822'])
+
+            # Patch required for Python 3 compatibility:
+            # In Python 3.x, IMAPClient returns byte arrays instead of str
+            if 'RFC822' in msg:
+                message = message_from_string(msg['RFC822'])
+            elif b'RFC822' in msg:
+                message = message_from_string(msg[b'RFC822'].decode('utf-8'))
+
             for callback_class, rules in CALLBACKS_MAP.items():
                 self.process_message(message, callback_class, rules)
             self.mark_processed(uid)
